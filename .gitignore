@@ -1,0 +1,12 @@
+/*
+!.gitignore
+!.gitmodules
+!LICENSE
+!README.md
+!CMakeLists.txt
+!/include
+!/source
+!/src
+!/test
+!/cmake
+!/external
