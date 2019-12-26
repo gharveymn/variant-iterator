@@ -319,13 +319,13 @@ namespace gch
   static_assert(std::is_trivially_destructible<value_citer<void *>>::value);
   
   template <typename T>
-  value_iter<T> value_begin (T&& val)
+  value_iter<typename std::remove_reference_t<T>> value_begin (T&& val)
   {
-    return value_iter<T> (std::forward<T> (val));
+    return value_iter<typename std::remove_reference_t<T>> (std::forward<T> (val));
   }
   
   template <typename T>
-  value_iter<T> value_end (T&& val)
+  value_iter<typename std::remove_reference_t<T>> value_end (T&& val)
   {
     return ++value_begin (std::forward<T> (val));
   }
