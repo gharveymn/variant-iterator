@@ -15,36 +15,6 @@
 #include <variant>
 #include <optional_ref.hpp>
 
-#if __has_cpp_attribute(nodiscard) >= 201603L
-#  define GCH_NODISCARD [[nodiscard]]
-#else
-#  define GCH_NODISCARD
-#endif
-
-#if __cpp_lib_addressof_constexpr >= 201603L
-#  define GCH_CONSTEXPR_ADDRESSOF constexpr
-#else
-#  define GCH_CONSTEXPR_ADDRESSOF
-#endif
-
-#if __cpp_inline_variables >= 201606
-#  define GCH_INLINE_VARS inline
-#else
-#  define GCH_INLINE_VARS
-#endif
-
-#if __cpp_lib_constexpr_algorithms >= 201806L
-#  define GCH_CONSTEXPR_SWAP constexpr
-#else
-#  define GCH_CONSTEXPR_SWAP
-#endif
-
-#if __cpp_constexpr >= 201304L
-#  define GCH_CPP14_CONSTEXPR constexpr
-#else
-#  define GCH_CPP14_CONSTEXPR
-#endif
-
 namespace gch
 {
 
@@ -103,250 +73,8 @@ namespace gch
     { };
   }
   
-  template <typename ...Ts>
-  using all_same    = detail::all_same<Ts...>;
-  
-  template <std::size_t I, typename ...Ts>
-  using select      = detail::select<I, Ts...>;
-  
-  template <std::size_t I, typename ...Ts>
-  using select_t    = typename select<I, Ts...>::type;
-  
-  template <typename T, typename ...Ts>
-  using index       = detail::index<0, T, Ts...>;
-  
-  template <typename T, typename ...Ts>
-  using is_element  = detail::is_element<T, void, Ts...>;
-  
-  template <typename It>
-  using is_iterator = detail::is_iterator<It>;
-  
-  template <typename ...Ts>
-  inline constexpr bool        all_same_v    = all_same<Ts...>::value;
-  
-  template <typename T, typename ...Ts>
-  inline constexpr std::size_t index_v       = index<T, Ts...>::value;
-  
-  template <typename T, typename ...Ts>
-  inline constexpr std::size_t is_element_v  = is_element<T, Ts...>::value;
-  
-  template <typename It>
-  inline constexpr bool        is_iterator_v = is_iterator<It>::value;
-  
   // basically just an iterator-compatible wrapper for a pointer
   // to avoid UB of incrementing a non-associated pointer.
-  template <typename Value>
-  class reference_iterator
-  {
-  public:
-    
-    using difference_type   = int8_t;
-    using value_type        = std::remove_cv_t<Value>;
-    using pointer           = Value *;
-    using reference         = Value&;
-    using iterator_category = std::random_access_iterator_tag;
-  
-    friend reference_iterator<std::add_const_t<Value>>;
-    friend reference_iterator<std::add_volatile_t<Value>>;
-    friend reference_iterator<std::add_cv_t<Value>>;
-  
-    reference_iterator            (void)                          = default;
-    reference_iterator            (const reference_iterator&)     = default;
-    reference_iterator            (reference_iterator&&) noexcept = default;
-    reference_iterator& operator= (const reference_iterator&)     = default;
-    reference_iterator& operator= (reference_iterator&&) noexcept = default;
-    ~reference_iterator           (void)                          = default;
-  
-    GCH_CONSTEXPR_ADDRESSOF explicit reference_iterator (reference ref)
-      : m_ref    (ref),
-        m_is_end (false)
-    { }
-    
-    // convert from value_iterator to const_value_iterator
-    template<typename NonConst, 
-             typename = std::enable_if_t<std::is_same<
-               std::remove_cv_t<Value>, NonConst>::value>>
-    constexpr 
-    reference_iterator (const reference_iterator<NonConst>& it) noexcept
-      : m_ref    (it.m_ref),
-        m_is_end (it.m_is_end)
-    { }
-  
-    constexpr reference_iterator& operator++ (void) noexcept
-    {
-      m_is_end = true;
-      return *this;
-    }
-  
-    constexpr reference_iterator operator++ (int) noexcept
-    {
-      reference_iterator save = *this;
-      ++*this;
-      return save;
-    }
-  
-    constexpr reference_iterator& operator-- (void) noexcept
-    {
-      m_is_end = false;
-      return *this;
-    }
-  
-    constexpr reference_iterator operator-- (int) noexcept
-    {
-      reference_iterator save = *this;
-      --*this;
-      return save;
-    }
-  
-    constexpr reference_iterator& operator+= (difference_type n) noexcept
-    {
-      if (n > 0)
-        return ++*this;
-      else if (n < 0)
-        return --*this;
-      return *this;
-    }
-    
-    [[nodiscard]]
-    constexpr reference_iterator operator+ (difference_type n) const noexcept
-    {
-      return reference_iterator (*this) += n;
-    }
-    
-    constexpr reference_iterator& operator-= (difference_type n) noexcept
-    {
-      return operator+= (-n);
-    }
-  
-    [[nodiscard]]
-    constexpr reference_iterator operator- (difference_type n) const noexcept
-    {
-      return operator+ (-n);
-    }
-    
-    [[nodiscard]]
-    constexpr difference_type 
-    operator- (const reference_iterator& other) const noexcept
-    {
-      return m_is_end - other.m_is_end;
-    }
-  
-    [[nodiscard]]
-    constexpr reference operator[] (difference_type n) const
-    {
-      return *(operator+ (n));
-    }
-    
-    //
-    // The below functions will be wrong if other does not refer to the same 
-    // object. However, this should be fine because it works the same way
-    // for std container iterators.
-    //
-  
-    [[nodiscard]]
-    constexpr bool operator< (const reference_iterator& other) const noexcept
-    {
-      return ! m_is_end && other.m_is_end;
-    }
-  
-    [[nodiscard]]
-    constexpr bool operator> (const reference_iterator& other) const noexcept
-    {
-      return m_is_end && ! other.m_is_end;
-    }
-  
-    [[nodiscard]]
-    constexpr bool operator<= (const reference_iterator& other) const noexcept
-    {
-      return m_is_end ? other.m_is_end : true;
-    }
-  
-    [[nodiscard]]
-    constexpr bool operator>= (const reference_iterator& other) const noexcept
-    {
-      return m_is_end ? true : ! other.m_is_end;
-    }
-  
-    [[nodiscard]]
-    constexpr bool operator== (const reference_iterator& other) const noexcept
-    {
-      return (m_ref == other.m_ref) && (m_is_end == other.m_is_end);
-    }
-  
-    [[nodiscard]]
-    constexpr bool operator!= (const reference_iterator& other) const noexcept
-    {
-      return ! operator== (other);
-    }
-  
-    [[nodiscard]]
-    constexpr reference operator* (void) const
-    {
-      return *m_ref;
-    }
-  
-    [[nodiscard]]
-    constexpr pointer operator-> (void) const
-    {
-      return m_ref.get_pointer ();
-    }
-  
-  private:
-  
-    [[nodiscard]]
-    constexpr bool is_end (void) const noexcept
-    {
-      return m_is_end;
-    }
-    
-    optional_ref<reference> m_ref;
-    bool m_is_end = true;
-    
-  };
-  
-  template <typename Value> [[nodiscard]]
-  constexpr reference_iterator<Value>
-  operator+ (typename reference_iterator<Value>::difference_type n, 
-             const reference_iterator<Value>& it) noexcept
-  {
-    return it + n;
-  }
-  
-  template <typename Value>
-  using const_reference_iterator = reference_iterator<const Value>;
-  
-  template <typename Value>
-  using reverse_reference_iterator
-    = std::reverse_iterator<reference_iterator<Value>>;
-  
-  template <typename Value>
-  using const_reverse_reference_iterator
-    = std::reverse_iterator<const_reference_iterator<Value>>;
-  
-  template <typename Value>
-  using ref_iter = reference_iterator<Value>;
-  
-  template <typename Value>
-  using ref_citer = const_reference_iterator<Value>;
-  
-  template <typename Value>
-  using ref_riter = reverse_reference_iterator<Value>;
-  
-  template <typename Value>
-  using ref_criter = const_reverse_reference_iterator<Value>;
-  
-  static_assert(std::is_trivially_copy_constructible<ref_iter<void *>>::value);
-  static_assert(std::is_trivially_move_constructible<ref_iter<void *>>::value);
-  static_assert(std::is_trivially_copy_assignable<ref_iter<void *>>::value);
-  static_assert(std::is_trivially_move_assignable<ref_iter<void *>>::value);
-  static_assert(std::is_trivially_destructible<ref_iter<void *>>::value);
-  
-  static_assert(std::is_trivially_copy_constructible<ref_citer<void *>>::value);
-  static_assert(std::is_trivially_move_constructible<ref_citer<void *>>::value);
-  static_assert(std::is_trivially_copy_assignable<ref_citer<void *>>::value);
-  static_assert(std::is_trivially_move_assignable<ref_citer<void *>>::value);
-  static_assert(std::is_trivially_destructible<ref_citer<void *>>::value);
-  
   template <typename Value>
   class value_iterator
   {
@@ -358,21 +86,13 @@ namespace gch
     using reference         = Value&;
     using iterator_category = std::random_access_iterator_tag;
   
-    struct dereference_exception : std::exception
-    {
-      dereference_exception (void) = default;
-    
-      explicit dereference_exception (const char *str)
-        : m_str (str)
-      { }
-    
+    class dereference_exception : public std::exception
+    {    
       [[nodiscard]]
-      const char* what (void) const noexcept override
-      {
-        return m_str;
+      const char* what (void) const noexcept override 
+      { 
+        return "Tried to dereference an incremented iterator."; 
       }
-    private:
-      const char* m_str = "Tried to dereference an incremented iterator.";
     };
   
     friend value_iterator<std::add_const_t<Value>>;
@@ -398,7 +118,7 @@ namespace gch
     template<typename NonConst,
              typename = std::enable_if_t<
                std::is_same<std::remove_const_t<Value>, NonConst>::value>>
-    constexpr value_iterator (const value_iterator<NonConst>& it) noexcept (
+    constexpr /* implicit */ value_iterator (const value_iterator<NonConst>& it) noexcept (
                          std::is_nothrow_copy_constructible<value_type>::value)
       : m_value  (it.m_value),
         m_is_end (it.m_is_end)
@@ -408,7 +128,7 @@ namespace gch
     template<typename NonConst,
              typename = std::enable_if_t<
                  std::is_same<std::remove_const_t<Value>, NonConst>::value>>
-    constexpr value_iterator (value_iterator<NonConst>&& it) noexcept (
+    constexpr /* implicit */ value_iterator (value_iterator<NonConst>&& it) noexcept (
     std::is_nothrow_move_constructible<value_type>::value)
         : m_value  (std::move (it.m_value)),
           m_is_end (it.m_is_end)
@@ -449,7 +169,7 @@ namespace gch
     [[nodiscard]]
     constexpr value_iterator operator+ (difference_type n) const noexcept
     {
-      return value_iterator(*this) += n;
+      return value_iterator (*this) += n;
     }
     
     constexpr value_iterator& operator-= (difference_type n) noexcept
@@ -488,62 +208,68 @@ namespace gch
     [[nodiscard]]
     constexpr bool operator< (const value_iterator& other) const noexcept
     {
-      return ! m_is_end && other.m_is_end;
+      return ! is_end () && other.is_end ();
     }
   
     [[nodiscard]]
     constexpr bool operator> (const value_iterator& other) const noexcept
     {
-      return m_is_end && ! other.m_is_end;
+      return is_end () && ! other.is_end ();
     }
   
     [[nodiscard]]
     constexpr bool operator<= (const value_iterator& other) const noexcept
     {
-      return m_is_end ? other.m_is_end : true;
+      return is_end () ? other.is_end () : true;
     }
   
     [[nodiscard]]
     constexpr bool operator>= (const value_iterator& other) const noexcept
     {
-      return m_is_end ? true : ! other.m_is_end;
+      return is_end () ? true : ! other.is_end ();
     }
   
     [[nodiscard]]
     constexpr bool operator== (const value_iterator& other) const noexcept
     {
-      return (m_value == other.m_value) && (m_is_end == other.m_is_end);
+      return is_end () == other.is_end ();
     }
   
     [[nodiscard]]
     constexpr bool operator!= (const value_iterator& other) const noexcept
     {
-      return ! operator== (other);
+      return is_end () != other.is_end ();
     }
   
     [[nodiscard]]
     constexpr reference operator* (void) const
     {
-      if (m_is_end)
+      if (is_end ())
         throw dereference_exception ();
       return m_value;
     }
   
     [[nodiscard]]
-    constexpr pointer operator-> (void) const
+    constexpr pointer operator-> (void) const noexcept
     {
-      return m_is_end ? nullptr : &m_value;
+      return is_end () ? nullptr : std::addressof (m_value);
     }
   
   private:
     
     [[nodiscard]]
-    constexpr bool additive_result (difference_type n) const noexcept 
+    constexpr bool is_end (void) const noexcept 
+    {
+      return m_is_end;
+    }
+    
+    [[nodiscard]]
+    constexpr bool additive_result (difference_type n) const noexcept
     {
       return n == 0 ? m_is_end : n > 0;
     }
   
-    mutable value_type m_value  = value_type ();
+    mutable value_type m_value;
             bool       m_is_end = true;
     
   };
@@ -616,7 +342,26 @@ namespace gch
   template <typename ...Its>
   class variant_iterator
   {
-    static_assert (std::conjunction<is_iterator<Its>...>::value, 
+  
+    template <std::size_t I, typename ...Ts>
+    using select_t    = typename detail::select<I, Ts...>::type;
+  
+    template <typename T, typename ...Ts>
+    using is_element  = detail::is_element<T, void, Ts...>;
+  
+    template <typename It>
+    using is_iterator = detail::is_iterator<It>;
+  
+    template <typename ...Ts>
+    static constexpr bool        all_same_v    = detail::all_same<Ts...>::value;
+  
+    template <typename T, typename ...Ts>
+    static constexpr std::size_t is_element_v  = detail::is_element<T, void, Ts...>::value;
+  
+    template <typename It>
+    static constexpr bool        is_iterator_v = detail::is_iterator<It>::value;
+    
+    static_assert (std::conjunction_v<is_iterator<Its>...>, 
                    "All template arguments must be iterators.");
   
     template <typename It>
@@ -639,13 +384,13 @@ namespace gch
     template <std::size_t I = 0>
     using iterator_type = select_t<I, Its...>;
   
-    static_assert (all_same<value_t<Its>...>::value,
+    static_assert (all_same_v<value_t<Its>...>,
                    "value types must be equal.");
   
-    static_assert (all_same<reference_t<Its>...>::value,
+    static_assert (all_same_v<reference_t<Its>...>,
                    "reference types must be equal.");
   
-    static_assert (all_same<pointer_t<Its>...>::value,
+    static_assert (all_same_v<pointer_t<Its>...>,
                    "pointer types must be equal.");
   
     using difference_type   = std::common_type_t<diff_t<Its>...>;
@@ -658,19 +403,11 @@ namespace gch
   
     struct type_exception : std::exception
     {
-      type_exception (void) = default;
-      
-      // explicit type_exception (const char *str)
-      //   : m_str (str)
-      // { }
-    
       [[nodiscard]]
       const char* what (void) const noexcept override
       {
-        return m_str;
+        return "Iterator types are not the same.";
       }
-    private:
-      const char* m_str = "Iterator types are not the same.";
     };
 
   private:
@@ -701,8 +438,8 @@ namespace gch
                                                iterator_type<>, 
                                                iterator_type<>>;
     
-      static_assert (all_same<std::invoke_result_t<BinaryOperator<void>,
-                                                   Its, Its>...>::value,
+      static_assert (all_same_v<std::invoke_result_t<BinaryOperator<void>,
+                                                     Its, Its>...>,
                      "Binary operator return types must be uniform.");
     
       template <typename T, typename U,
@@ -721,13 +458,13 @@ namespace gch
   
     // value copying initializer
     template <typename It,
-              typename = std::enable_if_t<is_element<It, Its...>::value>>
+              typename = std::enable_if_t<is_element_v<It, Its...>>>
     constexpr explicit variant_iterator (const It& it)
         : m_variant (it)
     { }
     
     template <typename It, 
-              typename = std::enable_if_t<is_element<It, Its...>::value>>
+              typename = std::enable_if_t<is_element_v<It, Its...>>>
     constexpr explicit variant_iterator (It&& it)
       : m_variant (std::forward<It> (it))
     { }
@@ -868,10 +605,4 @@ namespace gch
   };  
 }
 
-#undef GCH_NODISCARD
-#undef GCH_CONSTEXPR_ADDRESSOF
-#undef GCH_INLINE_VARS
-#undef GCH_CONSTEXPR_SWAP
-#undef GCH_CPP14_CONSTEXPR
-
-#endif /* UNION_ITERATOR_TEST_UNION_ITERATOR_HPP */
+#endif

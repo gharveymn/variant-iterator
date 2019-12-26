@@ -43,11 +43,6 @@ using vect_citer = std::vector<my_struct *>::const_iterator;
 using vect_riter = std::vector<my_struct *>::reverse_iterator;
 using vect_criter = std::vector<my_struct *>::const_reverse_iterator;
 
-using ref_iter = gch::reference_iterator<my_struct *>;
-using ref_citer = gch::const_reference_iterator<my_struct *>;
-using ref_riter = gch::reverse_reference_iterator<my_struct *>;
-using ref_criter = gch::const_reverse_reference_iterator<my_struct *>;
-
 using val_iter = gch::value_iterator<my_struct *>;
 using val_citer = gch::const_value_iterator<my_struct *>;
 using val_riter = gch::reverse_value_iterator<my_struct *>;
@@ -98,10 +93,10 @@ struct my_container
       return m_ptr;
   }
   
-  template <typename Return = ref_iter, typename Cast = ref_iter>
+  template <typename Return = val_iter, typename Cast = val_iter>
   Return get_ptr_iter (void)
   {
-    return Return (Cast (ref_iter (m_ptr)));
+    return Return (Cast (val_iter (m_ptr)));
   }
   
   vect_iter get_vector_iter (void)
@@ -132,17 +127,17 @@ auto my_container::get<vect_iter> (void) -> vect_iter
 }
 
 template <>
-gch::variant_iterator<vect_riter, ref_riter>
-my_container::get_ptr_iter<gch::variant_iterator<vect_riter, ref_riter>, ref_riter> (void)
+gch::variant_iterator<vect_riter, val_riter>
+my_container::get_ptr_iter<gch::variant_iterator<vect_riter, val_riter>, val_riter> (void)
 {
-  return gch::variant_iterator<vect_riter, ref_riter> (ref_riter (++ref_iter (m_ptr)));
+  return gch::variant_iterator<vect_riter, val_riter> (val_riter (++val_iter (m_ptr)));
 }
 
 template <>
-gch::variant_iterator<vect_criter, ref_criter>
-my_container::get_ptr_iter<gch::variant_iterator<vect_criter, ref_criter>, ref_criter> (void)
+gch::variant_iterator<vect_criter, val_criter>
+my_container::get_ptr_iter<gch::variant_iterator<vect_criter, val_criter>, val_criter> (void)
 {
-  return gch::variant_iterator<vect_criter, ref_criter> (ref_criter (++ref_iter (m_ptr)));
+  return gch::variant_iterator<vect_criter, val_criter> (val_criter (++val_iter (m_ptr)));
 }
 
 template <>
@@ -448,25 +443,6 @@ int main()
 //  using iter_v4 = uiter::union_iterator2<vect_citer, uiter::const_value_iterator<my_struct *>>;
 //  std::cout << "test_perf<iter_v4> (cont): ";
 //  std::cout << test_perf<iter_v4> (cont) << std::endl;
-
-  // check conversion from ref_iter to ref_citer and ref_riter to ref_criter
-  ref_iter it (cont.get_ptr_iter<ref_iter, ref_iter, ref_iter> ());
-  ref_citer cit (it);
-  ref_citer cit2 = it;
-  ref_citer cit3 = std::move (it);
-  
-  ref_riter rit (cont.get_ptr_iter<ref_iter, ref_iter, ref_iter> ());
-  ref_criter crit (rit);
-  ref_criter crit2 = rit;
-  ref_criter crit3 = std::move (rit);
-  
-  using iter_v5 = gch::variant_iterator<vect_iter, ref_iter>;
-  std::cout << "test_perf<iter_v5> (cont): ";
-  std::cout << test_perf<iter_v5, ref_iter> (cont) << std::endl;
-  
-  using iter_v6 = gch::variant_iterator<vect_citer, ref_citer>;
-  std::cout << "test_perf<iter_v6> (cont): ";
-  std::cout << test_perf<iter_v6, ref_citer> (cont) << std::endl;
   
   using iter_v9 = gch::variant_iterator<vect_iter, val_iter>;
   std::cout << "test_perf<iter_v9> (cont): ";
@@ -477,14 +453,6 @@ int main()
   std::cout << test_perf<iter_v10, val_citer> (cont) << std::endl;
   
   my_container1<true> rev_cont (cont_size);
-  
-  using iter_v7 = gch::variant_iterator<vect_riter, ref_riter>;
-  std::cout << "test_perf<iter_v7> (cont): ";
-  std::cout << test_perf<iter_v7, ref_iter> (rev_cont) << std::endl;
-  
-  using iter_v8 = gch::variant_iterator<vect_criter, ref_criter>;
-  std::cout << "test_perf<iter_v8> (cont): ";
-  std::cout << test_perf<iter_v8, ref_citer> (rev_cont) << std::endl;
   
   using iter_v11 = gch::variant_iterator<vect_riter, val_riter>;
   std::cout << "test_perf<iter_v11> (cont): ";
