@@ -7,13 +7,12 @@
  * of the MIT license. See the LICENSE file for details.
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef UNION_ITERATOR_TEST_UNION_ITERATOR_HPP
-#define UNION_ITERATOR_TEST_UNION_ITERATOR_HPP
+#ifndef VARIANT_ITERATOR_HPP
+#define VARIANT_ITERATOR_HPP
 
 #include <cstdint>
 #include <type_traits>
 #include <variant>
-#include <optional_ref.hpp>
 
 namespace gch
 {
