@@ -420,6 +420,48 @@ double test_perf(Container& cont)
   return duration_cast<duration<double>> (t2 - t1).count ();
 }
 
+using vect_iter1 = std::vector<int *>::iterator;
+using val_iter1  = gch::value_iterator<int *>;
+using viter = gch::variant_iterator<vect_iter1, val_iter1>;
+
+struct base
+{
+  virtual viter begin (void) = 0;
+  virtual viter end   (void) = 0;
+};
+
+struct vect_container : base
+{
+  vect_container (std::initializer_list<int *> init)
+    : m_vect (init)
+  { }
+  
+  // ...
+  viter begin (void) override { return viter (m_vect.begin ()); }
+  viter end   (void) override { return viter (m_vect.end ()); }
+private:
+  std::vector<int *> m_vect;
+};
+
+struct val_container : base
+{
+  val_container (int *val)
+    : m_val (val)
+  { }
+
+// ...
+  viter begin (void) override { return viter (gch::value_begin (m_val)); }
+  viter end   (void) override { return viter (gch::value_end (m_val)); }
+private:
+  int *m_val;
+};
+
+void do_something (base& ref)
+{
+  for (int *x : ref)
+    std::cout << *x << std::endl;
+}
+
 int main()
 {
   constexpr int cont_size = 10000;  
@@ -502,6 +544,16 @@ int main()
 //  using iter_vect = vect_iter;
 //  std::cout << "test_perf<iter_vect> (cont): ";
 //  std::cout << test_perf<iter_vect> (cont) << std::endl;
+
+  int x = 0;
+  int y = 1;
+  int z = 2;
+  
+  vect_container vect_cont {&x, &y};
+  val_container  val_cont  {&z};
+  
+  do_something (vect_cont);
+  do_something (val_cont);
   
   return 0;
 }
