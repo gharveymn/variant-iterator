@@ -5,7 +5,7 @@ PROJECT(variant-iterator
 
 INCLUDE(cmake/create-package.cmake)
 
-CREATE_HEADER_ONLY_PACKAGE(AUTHOR       gch
+CREATE_HEADER_ONLY_PACKAGE(AUTHOR       gharveymn
                            NAME         variant-iterator
                            HEADERS      variant-iterator.hpp)
 
@@ -20,4 +20,3 @@ ENDIF()
 IF(VARIANT_ITERATOR_BUILD_TESTS)
   ADD_SUBDIRECTORY(test)
 ENDIF()
-
