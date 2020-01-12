@@ -1,4 +1,4 @@
-/** union-iterator.hpp
+/** variant-iterator.hpp
  * Short description here. 
  * 
  * Copyright © 2019 Gene Harvey
@@ -126,7 +126,7 @@ namespace gch
     // move from value_iterator to const_value_iterator
     template<typename NonConst,
              typename = std::enable_if_t<
-                 std::is_same<std::remove_const_t<Value>, NonConst>::value>>
+               std::is_same<std::remove_const_t<Value>, NonConst>::value>>
     constexpr /* implicit */ value_iterator (value_iterator<NonConst>&& it) noexcept (
     std::is_nothrow_move_constructible<value_type>::value)
         : m_value  (std::move (it.m_value)),
@@ -413,8 +413,7 @@ namespace gch
   
     struct deduced_tag;
   
-    template <template<typename...> class BinaryOperator, 
-              typename Return = deduced_tag>
+    template <template<typename...> class BinaryOperator, typename Return = deduced_tag>
     struct binary_visitor : BinaryOperator<>
     {
       template <typename It>
@@ -434,7 +433,7 @@ namespace gch
     {
       using BinaryOperator<>::operator();
       using return_type = std::invoke_result_t<BinaryOperator<>,
-                                               iterator_type<>, 
+                                               iterator_type<>,
                                                iterator_type<>>;
     
       static_assert (all_same_v<std::invoke_result_t<BinaryOperator<void>,

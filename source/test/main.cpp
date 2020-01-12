@@ -420,45 +420,42 @@ double test_perf(Container& cont)
   return duration_cast<duration<double>> (t2 - t1).count ();
 }
 
-using vect_iter1 = std::vector<int *>::iterator;
-using val_iter1  = gch::value_iterator<int *>;
-using viter = gch::variant_iterator<vect_iter1, val_iter1>;
+#include <iostream>
+#include <variant-iterator.hpp>
+
+using namespace gch;
+
+using vector_iter  = std::vector<int *>::iterator;
+using value_iter1   = value_iterator<int *>;
+using variant_iter = variant_iterator<vector_iter, value_iter1>;
 
 struct base
 {
-  virtual viter begin (void) = 0;
-  virtual viter end   (void) = 0;
+  virtual variant_iter begin (void) = 0;
+  virtual variant_iter end   (void) = 0;
 };
 
-struct vect_container : base
+struct derived1 : base
 {
-  vect_container (std::initializer_list<int *> init)
-    : m_vect (init)
-  { }
-  
-  // ...
-  viter begin (void) override { return viter (m_vect.begin ()); }
-  viter end   (void) override { return viter (m_vect.end ()); }
+  derived1 (std::initializer_list<int *> in) : m_vect (in) { }
+  variant_iter begin (void) override { return variant_iter (m_vect.begin ()); }
+  variant_iter end   (void) override { return variant_iter (m_vect.end ());   }
 private:
   std::vector<int *> m_vect;
 };
 
-struct val_container : base
+struct derived2 : base
 {
-  val_container (int *val)
-    : m_val (val)
-  { }
-
-// ...
-  viter begin (void) override { return viter (gch::value_begin (m_val)); }
-  viter end   (void) override { return viter (gch::value_end (m_val)); }
+  derived2 (int *val) : m_val (val) { }
+  variant_iter begin (void) override { return variant_iter (value_begin (m_val)); }
+  variant_iter end   (void) override { return variant_iter (value_end   (m_val)); }
 private:
   int *m_val;
 };
 
-void do_something (base& ref)
+void print (base& b)
 {
-  for (int *x : ref)
+  for (int *x : b)
     std::cout << *x << std::endl;
 }
 
@@ -545,15 +542,13 @@ int main()
 //  std::cout << "test_perf<iter_vect> (cont): ";
 //  std::cout << test_perf<iter_vect> (cont) << std::endl;
 
-  int x = 0;
-  int y = 1;
-  int z = 2;
+  int x = 0, y = 1, z = 3;
   
-  vect_container vect_cont {&x, &y};
-  val_container  val_cont  {&z};
+  derived1 vect_cont {&x, &y};
+  derived2 val_cont  {&z};
   
-  do_something (vect_cont);
-  do_something (val_cont);
+  print (vect_cont);
+  print (val_cont);
   
   return 0;
 }
