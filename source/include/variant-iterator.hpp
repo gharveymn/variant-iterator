@@ -115,8 +115,8 @@ namespace gch
     // if the value is trivially copyable
     template <typename NonConst,
               typename = std::enable_if_t<std::conjunction_v<
-                std::is_same<std::remove_const_t<Value>, NonConst>::value>,
-                std::is_trivially_copyable<Value>>>
+                std::is_same<std::remove_const_t<Value>, NonConst>,
+                std::is_trivially_copyable<Value>>>>
     constexpr /* implicit */ value_iterator (const value_iterator<NonConst> it) noexcept
       : m_value  (it.m_value),
         m_is_end (it.m_is_end)
@@ -125,8 +125,8 @@ namespace gch
     // convert from value_iterator to const_value_iterator
     template <typename NonConst,
               typename = std::enable_if_t<std::conjunction_v<
-                std::is_same<std::remove_const_t<Value>, NonConst>::value>,
-                std::negation<std::is_trivially_copyable<Value>>>>
+                std::is_same<std::remove_const_t<Value>, NonConst>,
+                std::negation<std::is_trivially_copyable<Value>>>>>
     constexpr /* implicit */ value_iterator (const value_iterator<NonConst>& it) noexcept (
           std::is_nothrow_copy_constructible<value_type>::value)
       : m_value  (it.m_value),
@@ -136,8 +136,8 @@ namespace gch
     // move from value_iterator to const_value_iterator
     template <typename NonConst,
               typename = std::enable_if_t<std::conjunction_v<
-                std::is_same<std::remove_const_t<Value>, NonConst>::value>,
-                std::negation<std::is_trivially_copyable<Value>>>>
+                std::is_same<std::remove_const_t<Value>, NonConst>,
+                std::negation<std::is_trivially_copyable<Value>>>>>
     constexpr /* implicit */ value_iterator (value_iterator<NonConst>&& it) noexcept (
           std::is_nothrow_move_constructible<value_type>::value)
       : m_value  (std::move (it.m_value)),
