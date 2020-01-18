@@ -96,8 +96,6 @@ namespace gch
     };
 
     friend value_iterator<std::add_const_t<Value>>;
-    friend value_iterator<std::add_volatile_t<Value>>;
-    friend value_iterator<std::add_cv_t<Value>>;
 
     value_iterator            (void)                      = default;
     value_iterator            (const value_iterator&)     = default;
