@@ -573,8 +573,8 @@ namespace gch
     template <typename T>
     static constexpr bool not_self_v = not_self<T>::value;
 
-    static_assert (std::conjunction_v<is_iterator<Its>...>,
-                   "All template arguments must be iterators.");
+    // static_assert (std::conjunction_v<is_iterator<Its>...>,
+    //                "All template arguments must be iterators.");
 
     template <typename It>
     using diff_t = typename std::iterator_traits<It>::difference_type;
@@ -596,14 +596,14 @@ namespace gch
     template <std::size_t I = 0>
     using iterator_type = select_t<I, Its...>;
 
-    static_assert (all_same_v<value_t<Its>...>,
-                   "value types must be equal.");
+    // static_assert (all_same_v<value_t<Its>...>,
+    //                "value types must be equal.");
 
-    static_assert (all_same_v<reference_t<Its>...>,
-                   "reference types must be equal.");
+    // static_assert (all_same_v<reference_t<Its>...>,
+    //                "reference types must be equal.");
 
-    static_assert (all_same_v<pointer_t<Its>...>,
-                   "pointer types must be equal.");
+    // static_assert (all_same_v<pointer_t<Its>...>,
+    //                "pointer types must be equal.");
 
     using difference_type   = std::common_type_t<diff_t<Its>...>;
     using value_type        = value_t<iterator_type<>>;
@@ -650,9 +650,9 @@ namespace gch
                                                iterator_type<>,
                                                iterator_type<>>;
 
-      static_assert (all_same_v<std::invoke_result_t<BinaryOperator<void>,
-                                                     Its, Its>...>,
-                     "Binary operator return types must be uniform.");
+      // static_assert (all_same_v<std::invoke_result_t<BinaryOperator<void>,
+      //                                                Its, Its>...>,
+      //                "Binary operator return types must be uniform.");
 
       template <typename T, typename U,
                 typename = std::enable_if_t<! std::is_same<T, U>::value>>
@@ -808,12 +808,61 @@ namespace gch
       return std::visit ([] (auto&& it) -> pointer
                          { return it.operator-> (); }, m_variant);
     }
+    
+    template <typename T>
+    friend constexpr bool holds_alternative (const variant_iterator& v)
+    {
+      return std::holds_alternative<T> (v.m_variant);
+    }
+    
+    template <class T, class... Types>
+    friend constexpr T& get (variant_iterator& v);
+  
+    template <class T>
+    friend constexpr T& get (const variant_iterator& v);
+  
+    template <class T>
+    friend constexpr T& get (variant_iterator&& v);
+  
+    template <class T>
+    friend constexpr T& get (const variant_iterator&& v);
 
   private:
 
     std::variant<Its...> m_variant;
 
   };
+  
+  template <typename T, typename ...Types>
+  constexpr bool holds_alternative (const variant_iterator<Types...>& v)
+  {
+    return std::holds_alternative<T> (v.m_variant);
+  }
+  
+  template <class T, class... Types>
+  constexpr T& get (variant_iterator<Types...>& v)
+  {
+    return std::get<T> (v.m_variant);
+  }
+  
+  template <class T, class... Types>
+  constexpr const T& get (const variant_iterator<Types...>& v)
+  {
+    return std::get<T> (v.m_variant);
+  }
+  
+  template <class T, class... Types>
+  constexpr T&& get (variant_iterator<Types...>&& v)
+  {
+    return std::get<T> (v.m_variant);
+  }
+  
+  template <class T, class... Types>
+  constexpr const T&& get (const variant_iterator<Types...>&& v)
+  {
+    return std::get<T> (v.m_variant);
+  }
+  
 }
 
 #endif
