@@ -10,6 +10,7 @@
 #ifndef VARIANT_ITERATOR_HPP
 #define VARIANT_ITERATOR_HPP
 
+#include <stdexcept>
 #include <cstdint>
 #include <functional>
 #include <type_traits>
