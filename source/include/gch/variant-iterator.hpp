@@ -11,6 +11,7 @@
 #define VARIANT_ITERATOR_HPP
 
 #include <cstdint>
+#include <iterator>
 #include <type_traits>
 #include <variant>
 
@@ -109,16 +110,16 @@ namespace gch
               typename = std::enable_if_t<
                 std::is_constructible<value_type, Args...>::value>>
     constexpr explicit value_iterator (Args&&... args)
-        : m_value (std::forward<Args> (args)...),
-          m_is_end (false)
+      : m_value (std::forward<Args> (args)...),
+        m_is_end (false)
     { }
   
     // convert from value_iterator to const_value_iterator
-    template<typename NonConst,
-             typename = std::enable_if_t<
+    template <typename NonConst,
+              typename = std::enable_if_t<
                std::is_same<std::remove_const_t<Value>, NonConst>::value>>
     constexpr /* implicit */ value_iterator (const value_iterator<NonConst>& it) noexcept (
-                         std::is_nothrow_copy_constructible<value_type>::value)
+      std::is_nothrow_copy_constructible<value_type>::value)
       : m_value  (it.m_value),
         m_is_end (it.m_is_end)
     { }
@@ -128,9 +129,9 @@ namespace gch
              typename = std::enable_if_t<
                std::is_same<std::remove_const_t<Value>, NonConst>::value>>
     constexpr /* implicit */ value_iterator (value_iterator<NonConst>&& it) noexcept (
-    std::is_nothrow_move_constructible<value_type>::value)
-        : m_value  (std::move (it.m_value)),
-          m_is_end (it.m_is_end)
+      std::is_nothrow_move_constructible<value_type>::value)
+      : m_value  (std::move (it.m_value)),
+        m_is_end (it.m_is_end)
     { }
   
     constexpr value_iterator& operator++ (void) noexcept

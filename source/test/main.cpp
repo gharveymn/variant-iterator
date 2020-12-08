@@ -3,6 +3,8 @@
 #endif
 #define _ITERATOR_DEBUG_LEVEL 0
 
+#include "gch/variant-iterator.hpp"
+
 #include <iostream>
 #include <vector>
 #include <memory>
@@ -10,8 +12,6 @@
 #include <chrono>
 #include <functional>
 #include <cassert>
-
-#include <variant-iterator.hpp>
 
 std::random_device rd;
 std::mt19937 rd_gen (rd ());
