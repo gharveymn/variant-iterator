@@ -420,9 +420,6 @@ double test_perf(Container& cont)
   return duration_cast<duration<double>> (t2 - t1).count ();
 }
 
-#include <iostream>
-#include <variant-iterator.hpp>
-
 using namespace gch;
 
 using vector_iter  = std::vector<int *>::iterator;
