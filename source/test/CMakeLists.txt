@@ -85,7 +85,7 @@ set (VARIANT_ITERATOR_TEST_NAMES
      main
      )
 
-foreach (version 11 14 17 20)
+foreach (version 17 20)
   foreach (name ${VARIANT_ITERATOR_TEST_NAMES})
     add_unit_test (variant-iterator.${name}.c++${version} ${name}.cpp)
 
