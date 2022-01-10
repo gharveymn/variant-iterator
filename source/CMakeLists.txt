@@ -1,21 +1,70 @@
-IF(NOT CREATE_PACKAGE_VERSION VERSION_GREATER_EQUAL 0.0.4)
-  IF(NOT EXISTS "${PROJECT_SOURCE_DIR}/external/create-package/cmake/create-package.cmake")
-    MESSAGE(STATUS "Initializing create-package-0.0.4 in git submodule.")
-    EXECUTE_PROCESS(COMMAND git submodule --quiet update --init -- "${PROJECT_SOURCE_DIR}/external/create-package"
-                    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
-  ENDIF()
-  INCLUDE("${PROJECT_SOURCE_DIR}/external/create-package/cmake/create-package.cmake")
-ENDIF()
+add_library (variant-iterator INTERFACE)
 
-CREATE_PACKAGE(AUTHOR       gharveymn
-               NAMESPACE    gch
-               NAME         variant-iterator
-               HEADERS      variant-iterator.hpp)
+target_sources (
+  variant-iterator
+  INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include/gch/variant-iterator.hpp>
+)
 
-# Only include tests if we are at the top level
-IF(VARIANT_ITERATOR_BUILD_TESTS)
-  MESSAGE(STATUS "Testing is enabled.")
-  ADD_SUBDIRECTORY(test)
-ELSE()
-  MESSAGE(STATUS "Testing is disabled.")
-ENDIF()
+target_include_directories (
+  variant-iterator
+  INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+)
+
+target_include_directories (
+  variant-iterator
+  SYSTEM INTERFACE
+    $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
+)
+
+set_target_properties (
+  variant-iterator
+  PROPERTIES
+  PUBLIC_HEADER
+    include/gch/variant-iterator.hpp
+)
+
+add_library (gch::variant-iterator ALIAS variant-iterator)
+
+install (
+  TARGETS
+    variant-iterator
+  EXPORT
+    variant-iterator-targets
+  PUBLIC_HEADER
+    DESTINATION include/gch
+)
+
+file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/variant-iterator-config.cmake [=[
+get_filename_component (PACKAGE_PREFIX_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
+include ("${CMAKE_CURRENT_LIST_DIR}/variant-iterator-targets.cmake")
+]=])
+
+include (CMakePackageConfigHelpers)
+write_basic_package_version_file (
+  variant-iterator-version.cmake
+  COMPATIBILITY
+    SameMinorVersion
+)
+
+install (
+  FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/variant-iterator-config.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/variant-iterator-version.cmake
+  DESTINATION
+    lib/cmake/variant-iterator
+)
+
+install (
+  EXPORT
+    variant-iterator-targets
+  DESTINATION
+    lib/cmake/variant-iterator
+  NAMESPACE
+    gch::
+)
+
+if (GCH_VARIANT_ITERATOR_BUILD_TESTS)
+  add_subdirectory (test)
+endif ()
